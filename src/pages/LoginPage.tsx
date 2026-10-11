@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { signInWithGoogle } from '../firebase/auth';
+import { signInWithGoogle, signInWithFacebook } from '../firebase/auth';
 
 // SVG logo Google inline — không cần file ảnh ngoài
 const GoogleIcon = () => (
@@ -23,27 +23,52 @@ const GoogleIcon = () => (
   </svg>
 );
 
+// SVG logo Facebook inline
+const FacebookIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="#fff">
+    <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.532-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.887v2.267h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
+  </svg>
+);
+
 const LoginPage = () => {
-  const [loading, setLoading] = useState(false);
+  const [loadingGoogle, setLoadingGoogle] = useState(false);
+  const [loadingFacebook, setLoadingFacebook] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const isLoading = loadingGoogle || loadingFacebook;
+
+  const handleError = (err: unknown) => {
+    if (err instanceof Error && (err as { code?: string }).code === 'auth/popup-closed-by-user') {
+      return; // Người dùng tự đóng popup → không báo lỗi
+    }
+    if (err instanceof Error) {
+      setError(err.message);
+    } else {
+      setError('Đăng nhập thất bại. Vui lòng thử lại.');
+    }
+  };
+
   const handleGoogleLogin = async () => {
-    setLoading(true);
+    setLoadingGoogle(true);
     setError(null);
     try {
       await signInWithGoogle();
-      // AuthContext sẽ tự cập nhật user — không cần làm gì thêm ở đây
     } catch (err: unknown) {
-      // Người dùng đóng popup → không cần báo lỗi
-      if (err instanceof Error && (err as { code?: string }).code === 'auth/popup-closed-by-user') {
-        // Bỏ qua
-      } else if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('Đăng nhập thất bại. Vui lòng thử lại.');
-      }
+      handleError(err);
     } finally {
-      setLoading(false);
+      setLoadingGoogle(false);
+    }
+  };
+
+  const handleFacebookLogin = async () => {
+    setLoadingFacebook(true);
+    setError(null);
+    try {
+      await signInWithFacebook();
+    } catch (err: unknown) {
+      handleError(err);
+    } finally {
+      setLoadingFacebook(false);
     }
   };
 
@@ -71,15 +96,33 @@ const LoginPage = () => {
           id="btn-google-login"
           className="btn btn-google"
           onClick={handleGoogleLogin}
-          disabled={loading}
+          disabled={isLoading}
           type="button"
         >
-          {loading ? (
+          {loadingGoogle ? (
             <span className="spinner spinner-dark" aria-hidden="true" />
           ) : (
             <GoogleIcon />
           )}
-          {loading ? 'Đang đăng nhập...' : 'Tiếp tục với Google'}
+          {loadingGoogle ? 'Đang đăng nhập...' : 'Tiếp tục với Google'}
+        </button>
+
+        <div className="divider">hoặc</div>
+
+        {/* Nút Facebook */}
+        <button
+          id="btn-facebook-login"
+          className="btn btn-facebook"
+          onClick={handleFacebookLogin}
+          disabled={isLoading}
+          type="button"
+        >
+          {loadingFacebook ? (
+            <span className="spinner" aria-hidden="true" />
+          ) : (
+            <FacebookIcon />
+          )}
+          {loadingFacebook ? 'Đang đăng nhập...' : 'Tiếp tục với Facebook'}
         </button>
 
         {/* Thông báo lỗi */}
@@ -93,7 +136,7 @@ const LoginPage = () => {
         <p className="login-footer">
           STEP 2 — Thực hành Firebase Authentication
           <br />
-          Google Login · Facebook Login (coming soon)
+          Google Login · Facebook Login
         </p>
       </div>
     </div>

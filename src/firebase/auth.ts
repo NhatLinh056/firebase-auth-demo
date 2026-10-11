@@ -1,6 +1,7 @@
 import {
   getAuth,
   GoogleAuthProvider,
+  FacebookAuthProvider,
   signInWithPopup,
   signOut as firebaseSignOut,
   onAuthStateChanged,
@@ -15,6 +16,9 @@ const auth = getAuth(app);
 // Google Provider — dùng để đăng nhập bằng tài khoản Google
 const googleProvider = new GoogleAuthProvider();
 
+// Facebook Provider — dùng để đăng nhập bằng tài khoản Facebook
+const facebookProvider = new FacebookAuthProvider();
+
 /**
  * Đăng nhập bằng Google qua popup.
  * Trả về thông tin user nếu thành công.
@@ -22,6 +26,16 @@ const googleProvider = new GoogleAuthProvider();
  */
 export const signInWithGoogle = async (): Promise<User> => {
   const result = await signInWithPopup(auth, googleProvider);
+  return result.user;
+};
+
+/**
+ * Đăng nhập bằng Facebook qua popup.
+ * Trả về thông tin user nếu thành công.
+ * Ném lỗi nếu người dùng đóng popup hoặc có vấn đề.
+ */
+export const signInWithFacebook = async (): Promise<User> => {
+  const result = await signInWithPopup(auth, facebookProvider);
   return result.user;
 };
 
