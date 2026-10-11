@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { signInWithGoogle, signInWithFacebook } from '../firebase/auth';
+import { getAuthErrorMessage } from '../utils/authErrors';
 
 // SVG logo Google inline — không cần file ảnh ngoài
 const GoogleIcon = () => (
@@ -38,14 +39,8 @@ const LoginPage = () => {
   const isLoading = loadingGoogle || loadingFacebook;
 
   const handleError = (err: unknown) => {
-    if (err instanceof Error && (err as { code?: string }).code === 'auth/popup-closed-by-user') {
-      return; // Người dùng tự đóng popup → không báo lỗi
-    }
-    if (err instanceof Error) {
-      setError(err.message);
-    } else {
-      setError('Đăng nhập thất bại. Vui lòng thử lại.');
-    }
+    const message = getAuthErrorMessage(err);
+    if (message) setError(message); // null = lỗi im lặng, không hiển thị
   };
 
   const handleGoogleLogin = async () => {
